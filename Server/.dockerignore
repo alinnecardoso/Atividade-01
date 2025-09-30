@@ -1,0 +1,10 @@
+node_modules
+npm-debug.log*
+.npmrc
+.env
+logs
+*.log
+coverage
+tmp
+*.swp
+.DS_Store
