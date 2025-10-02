@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { View } from 'react-native';
 import { TextInput as PaperTextInput, HelperText } from 'react-native-paper';
 
@@ -10,12 +10,50 @@ export default function StudentFormFields({
   cepLoading,
 }) {
   const { nome, curso, cep, logradouro, numero, complemento, bairro, cidade, uf } = values;
+  const cepValue = String(cep || '').replace(/\D/g, '').slice(0, 8);
 
-  const maskCep = (v) => {
-    const d = String(v || '').replace(/\D/g, '').slice(0, 9);
-    if (d.length <= 5) return d;
-    return `${d.slice(0, 5)}-${d.slice(5)}`;
-  };
+  const cepLookupTimeout = useRef(null);
+  const lastLookupCep = useRef('');
+
+  const triggerCepLookup = useCallback(
+    (rawCep) => {
+      if (!onCepBlur) return;
+      const source = typeof rawCep === 'undefined' ? cepValue : rawCep;
+      const digits = String(source || '')
+        .replace(/\D/g, '')
+        .slice(0, 8);
+
+      if (cepLookupTimeout.current) {
+        clearTimeout(cepLookupTimeout.current);
+        cepLookupTimeout.current = null;
+      }
+
+      if (digits.length !== 8) {
+        lastLookupCep.current = '';
+        return;
+      }
+
+      cepLookupTimeout.current = setTimeout(() => {
+        if (lastLookupCep.current === digits) return;
+        lastLookupCep.current = digits;
+        try {
+          onCepBlur(digits);
+        } catch {
+          // Evita quebrar o fluxo se o handler lancar
+        }
+      }, 250);
+    },
+    [onCepBlur, cepValue],
+  );
+
+  useEffect(
+    () => () => {
+      if (cepLookupTimeout.current) {
+        clearTimeout(cepLookupTimeout.current);
+      }
+    },
+    [],
+  );
   return (
     <>
       <PaperTextInput
@@ -44,16 +82,14 @@ export default function StudentFormFields({
           style={{ flex: 1 }}
           mode="outlined"
           label="CEP"
-          value={maskCep(cep)}
+          value={cepValue}
           onChangeText={(t) => {
-            const digits = String(t || '').replace(/\D/g, '').slice(0, 8);
-            onChange('cep', digits);
-            if (digits.length === 8) {
-              try { onCepBlur?.(digits); } catch {}
-            }
+            onChange('cep', t);
+            triggerCepLookup(t);
           }}
-          onBlur={() => onCepBlur?.()}
-          onSubmitEditing={() => onCepBlur?.()}
+          onBlur={() => triggerCepLookup()}
+          onEndEditing={() => triggerCepLookup()}
+          onSubmitEditing={() => triggerCepLookup()}
           keyboardType="numeric"
           error={!!errors.cep}
           left={<PaperTextInput.Icon icon="map-search-outline" />}

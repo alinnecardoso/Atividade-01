@@ -11,7 +11,7 @@ try {
 }
 
 // 2) Override padrão para device físico (exceto web)
-const DEFAULT_DEVICE_OVERRIDE = Platform.OS === 'web' ? null : '10.153.14.131';
+const DEFAULT_DEVICE_OVERRIDE = Platform.OS === 'web' ? null : '192.168.1.57';
 
 // 3) Detecta automaticamente o host do servidor Metro quando rodando no Expo Go
 let DEV_HOST = null;

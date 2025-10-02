@@ -2,6 +2,7 @@ const app = require('./src/app');
 
 const port = process.env.PORT || 3000;
 
-app.listen(port, () => {
-  console.log(`API listening on http://localhost:${port}`);
+// 🔑 OUÇA EM TODAS AS INTERFACES (não só localhost)
+app.listen(port, '0.0.0.0', () => {
+  console.log(`API ouvindo na porta ${port} em 0.0.0.0`);
 });
